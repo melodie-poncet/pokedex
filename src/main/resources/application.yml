@@ -1,0 +1,33 @@
+debug: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+server:
+  port: 9001
+
+
+
+db:
+  driver: com.mysql.jdbc.Driver
+  url: jdbc:mysql://localhost:3306/pokedex
+  username: root
+  password: pokePWD
+
+
+hibernate:
+  dialect: org.hibernate.dialect.MySQL5Dialect
+  show_sql: true
+  hbm2ddl:
+    auto: update
+
+entitymanager.packagesToScan: com.api.tuto.config
+
+spring:
+  jpa:
+     hibernate:
+        naming:
+           implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+           physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
