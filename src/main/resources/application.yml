@@ -8,7 +8,16 @@ logging:
 server:
   port: 9001
 
-
+swagger:
+  title: pokedex API
+  description: pokedex API documentation
+  version: 0.0.1
+  termsOfServiceUrl: API terms of services URL
+  contactName: Sacha
+  contactUrl:
+  contactEmail:
+  license: API License type
+  licenseUrl: API License URL
 
 db:
   driver: com.mysql.jdbc.Driver
