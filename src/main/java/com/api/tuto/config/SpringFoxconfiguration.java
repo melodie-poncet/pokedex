@@ -22,7 +22,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
 
 @Configuration
 @EnableSwagger2
-@EnableConfigurationProperties(PokemonProperties.class)
+@EnableConfigurationProperties(PokedexProperties.class)
 public class SpringFoxconfiguration {
 	
 	private final Logger log = LoggerFactory.getLogger(SpringFoxconfiguration.class);
@@ -30,7 +30,7 @@ public class SpringFoxconfiguration {
     public static final String DEFAULT_INCLUDE_PATTERN = "/pokedex/.*";
     
     @Autowired
-    PokemonProperties pokemonProperties;
+    PokedexProperties pokedexProperties;
     
     @Bean
     public Docket swaggerSpringfoxDocket() {
@@ -38,18 +38,18 @@ public class SpringFoxconfiguration {
         StopWatch watch = new StopWatch();
         watch.start();
         Contact contact = new Contact(
-                pokemonProperties.getContactName(),
-                pokemonProperties.getContactUrl(),
-                pokemonProperties.getContactEmail());
+                pokedexProperties.getContactName(),
+                pokedexProperties.getContactUrl(),
+                pokedexProperties.getContactEmail());
 
         ApiInfo apiInfo = new ApiInfo(
-                pokemonProperties.getTitle(),
-                pokemonProperties.getDescription(),
-                pokemonProperties.getVersion(),
-                pokemonProperties.getTermsOfServiceUrl(),
+                pokedexProperties.getTitle(),
+                pokedexProperties.getDescription(),
+                pokedexProperties.getVersion(),
+                pokedexProperties.getTermsOfServiceUrl(),
                 contact,
-                pokemonProperties.getLicense(),
-                pokemonProperties.getLicenseUrl());
+                pokedexProperties.getLicense(),
+                pokedexProperties.getLicenseUrl());
 
         Docket docket = new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo)
