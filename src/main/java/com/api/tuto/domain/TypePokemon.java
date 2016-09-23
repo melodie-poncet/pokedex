@@ -9,6 +9,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Entity
 @Table(name = "pokemons")
@@ -23,6 +25,8 @@ public class TypePokemon  {
     @Column(name = "type")
     private String typeP;
     
+    
+    @JsonIgnore
 	@OneToMany(mappedBy="type_poke")
 	private List<PokeCapture> pokeCaptures;
 
