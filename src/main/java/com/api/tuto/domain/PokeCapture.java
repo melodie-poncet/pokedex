@@ -1,24 +1,25 @@
 package com.api.tuto.domain;
 
+
 import java.io.Serializable;
-import java.util.Objects;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.api.tuto.repository.PKeyPokeCapture;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
 @Table(name ="poke_capture")
 public class PokeCapture implements Serializable{
 	
-	
-	
-	private static final long serialVersionUID = -5526328398586277608L;
-
+	@EmbeddedId
+	private PKeyPokeCapture pk;
 	
 	@Column(name = "niveau")
 	private int niveau;
@@ -26,31 +27,27 @@ public class PokeCapture implements Serializable{
 	@Column(name = "sexe")
 	private String sexe;
 	
-	@Id
 	@ManyToOne
-	@JoinColumn(name = "id_pokemon")
+	@JoinColumn(name = "id_pokemon", insertable=false, updatable=false)
 	TypePokemon type_poke;
 	
 	
-	@Id
 	@ManyToOne
-	@JoinColumn(name = "id_dresseur")
+	@JoinColumn(name = "id_dresseur", insertable=false, updatable=false)
 	Dresseur dresseur;
+	
+	
 
 	public PokeCapture(){
 		
 	}
 
-	public PokeCapture(TypePokemon tp, Dresseur d, String niveau, String sexe){
-		dresseur = d;
-		type_poke = tp;
-		try{
-			this.niveau = Integer.valueOf(niveau);
-		}catch (NumberFormatException e) {
-			System.err.println(e);
-			this.niveau = 0;
-		}
-		this.sexe = sexe;
+	public PKeyPokeCapture getPk() {
+		return pk;
+	}
+
+	public void setPk(PKeyPokeCapture pk) {
+		this.pk = pk;
 	}
 
 	public int getNiveau() {
@@ -69,36 +66,46 @@ public class PokeCapture implements Serializable{
 		this.sexe = sexe;
 	}
 
-	public TypePokemon getType_poke() {
-		return type_poke;
+//	public TypePokemon getType_poke() {
+//		return type_poke;
+//	}
+//
+//	public void setType_poke(TypePokemon type_poke) {
+//		this.type_poke = type_poke;
+//	}
+//
+//	public Dresseur getDresseur() {
+//		return dresseur;
+//	}
+//
+//	public void setDresseur(Dresseur dresseur) {
+//		this.dresseur = dresseur;
+//	}
+	
+	@JsonIgnore
+	public int getType_pokeID() {
+		return pk.getType_poke().getId();
 	}
-
-	public void setType_poke(TypePokemon type_poke) {
-		this.type_poke = type_poke;
-	}
-
-	public Dresseur getDresseur() {
-		return dresseur;
-	}
-
-	public void setDresseur(Dresseur dresseur) {
-		this.dresseur = dresseur;
+	
+	@JsonIgnore
+	public int getDresseurID() {
+		return pk.getDresseur().getId();
 	}
 	
 	@Override
-	public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        PokeCapture pc = (PokeCapture) o;
-        if(pc.getDresseur().getId() != dresseur.getId() || pc.getType_poke().getId() != type_poke.getId()) {
-            return false;
-        }
-        return true;
-    }
-	
-	
+	public boolean equals(Object o){
+		
+		 if(o instanceof PokeCapture){
+			 PokeCapture poke = (PokeCapture) o;
+			 if(poke.getDresseurID() != this.getDresseurID()  || poke.getType_pokeID() != this.getType_pokeID()){
+				 return false;
+			 }
+			 
+			 return true;
+			 
+		 }else{
+			 return false;
+		 }
+		
+	}
 }

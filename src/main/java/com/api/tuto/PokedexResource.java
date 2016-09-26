@@ -18,7 +18,8 @@ import com.api.tuto.domain.Dresseur;
 import com.api.tuto.domain.PokeCapture;
 import com.api.tuto.domain.TypePokemon;
 import com.api.tuto.repository.DresseurRepository;
-import com.api.tuto.repository.PokeCaptureService;
+import com.api.tuto.repository.PKeyPokeCapture;
+import com.api.tuto.repository.PokeCaptureRepository;
 import com.api.tuto.repository.TypePokemonRepository;
 
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +36,7 @@ public class PokedexResource {
     private DresseurRepository dresseurRepository;
     
     @Autowired
-    private PokeCaptureService pokeCaptureService;
+    private PokeCaptureRepository pokeCaptureRepository;
     
     
     //################################# Types Pokémon ##########################################
@@ -170,12 +171,26 @@ public class PokedexResource {
     @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response")})
     @RequestMapping(value = "/dresseurs/{id_d}/pokemons/{id_p}", method = RequestMethod.GET)
     public ResponseEntity<PokeCapture> getPokeCaptureDresseur(@PathVariable int id_d, @PathVariable int id_p) {
-    		PokeCapture poke = pokeCaptureService.getPokeCaptureByIdTypePokemonAndIdDresseur(id_p, id_d);
-        	if(poke != null){
-        		return ResponseEntity.ok().body(poke);
+    	
+    	PKeyPokeCapture pk = new PKeyPokeCapture();
+    	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id_d));
+    	Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(id_p));
+        if(dresseur.isPresent() && typePokemon.isPresent()) {
+        	
+        	pk.setDresseur(dresseur.get());
+        	pk.setType_poke(typePokemon.get());
+        	
+        	Optional<PokeCapture> pokeCapture = Optional.ofNullable(pokeCaptureRepository.findOne(pk));
+        	
+        	if(pokeCapture.isPresent()){
+        		return ResponseEntity.ok().body(pokeCapture.get());
         	}else{
         		return new ResponseEntity<PokeCapture>(HttpStatus.NOT_FOUND);
         	}
+        	
+        }else{
+        	return new ResponseEntity<PokeCapture>(HttpStatus.NOT_FOUND);
+        }
     }
     
 
@@ -189,18 +204,12 @@ public class PokedexResource {
         	boolean allAdd = true;
         	
         	for(PokeCapture poke : pokeCaptures){
-        		Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(poke.getType_poke().getId()));
+        		Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(poke.getType_pokeID()));
         		if(typePokemon.isPresent()){
-        			poke.setDresseur(dresseur.get());
-        			poke.setType_poke(typePokemon.get());
-					dresseur.get().addPokeCaptures(poke);
-					typePokemon.get().addPokeCaptures(poke);
-					pokeCaptureService.addPokeCapture(poke);
-					
+        			pokeCaptureRepository.save(poke);
         		}else{
 					allAdd = false;
 				}
-					
         	}
         	if(allAdd){
         		return ResponseEntity.ok().body(pokeCaptures);
@@ -218,25 +227,17 @@ public class PokedexResource {
     @RequestMapping(value = "/dresseurs/{id}/pokemons", method = RequestMethod.PUT)
     public HttpStatus updatePokeCaptureDresseur(@PathVariable int id, @RequestBody List<PokeCapture> pokeCaptures) {
     	
-    	
-    	
     	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id));
         if(dresseur.isPresent()) {
         	boolean allUpdate = true;
         	List<PokeCapture> l_pc = dresseur.get().getPokeCaptures();
         	for(PokeCapture poke : pokeCaptures){
-        		poke.setDresseur(dresseur.get());
         		if(l_pc.contains(poke)){
-        			l_pc.set(l_pc.indexOf(poke), poke);
-        			pokeCaptureService.updatePokeCapture(poke);
+        			pokeCaptureRepository.save(poke);
         		}else{
-        			Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(poke.getType_poke().getId()));
+        			Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(poke.getType_pokeID()));
             		if(typePokemon.isPresent()){
-            			poke.setDresseur(dresseur.get());
-            			poke.setType_poke(typePokemon.get());
-    					dresseur.get().addPokeCaptures(poke);
-    					typePokemon.get().addPokeCaptures(poke);
-    					pokeCaptureService.addPokeCapture(poke);
+            			pokeCaptureRepository.save(poke);
             		}else{
             			allUpdate = false;
             		}
@@ -245,9 +246,7 @@ public class PokedexResource {
         	
         	for(PokeCapture poke : l_pc){
         		if(!pokeCaptures.contains(poke)){
-        			if(!pokeCaptureService.removePokeCapture(poke)){
-        				allUpdate = false;
-        			}
+        			pokeCaptureRepository.delete(poke);
         		}
         	}
         
@@ -256,7 +255,6 @@ public class PokedexResource {
         	}else{
         		return HttpStatus.PARTIAL_CONTENT;
         	}
-        	
         }else{
         	return HttpStatus.NOT_FOUND;
         }
@@ -266,12 +264,18 @@ public class PokedexResource {
     @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response"), @io.swagger.annotations.ApiResponse(code = 404, message = "Dresseur or Type_Pokemon don't exist in database") })
     @RequestMapping(value = "/dresseurs/{id_d}/pokemons/{id_p}", method = RequestMethod.DELETE)
     public HttpStatus deletePokeCaptureDresseur(@PathVariable int id_d, @PathVariable int id_p) {
+    	PKeyPokeCapture pk = new PKeyPokeCapture();
+    	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id_d));
+    	Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(id_p));
+        if(dresseur.isPresent() && typePokemon.isPresent()) {
+        	pk.setDresseur(dresseur.get());
+        	pk.setType_poke(typePokemon.get());
+        	pokeCaptureRepository.delete(pk);
+        }else{
+        	return HttpStatus.NOT_FOUND;
+        }
     	
-        	if(pokeCaptureService.removePokeCapture(id_d, id_p)){
-        		return HttpStatus.OK;
-        	}else{
-        		return HttpStatus.NOT_FOUND;
-        	}
+        return HttpStatus.OK;
     }
 
 }
