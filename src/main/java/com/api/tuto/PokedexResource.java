@@ -65,7 +65,7 @@ public class PokedexResource {
     }
 
     @ApiOperation(value = "Create a new pokemon",  response = TypePokemon.class, notes = "the ID must match the official number of pokemon ")
-    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response") })
+    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 201, message = "Created !") })
     @RequestMapping(value = "/t_pokemons", method = RequestMethod.POST)
     public ResponseEntity<TypePokemon> createPokemon(@RequestBody TypePokemon typePokemon) throws URISyntaxException {
     	TypePokemon result = typePokemonRepository.save(typePokemon);
@@ -121,7 +121,7 @@ public class PokedexResource {
     
 
     @ApiOperation(value = "Create a new dresseur",  response = TypePokemon.class, notes = "the ID is automatically defined")
-    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response") })
+    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 201, message = "Created !") })
     @RequestMapping(value = "/dresseurs", method = RequestMethod.POST)
     public ResponseEntity<Dresseur> createDresseur(@RequestBody Dresseur dresseur) throws URISyntaxException {
     	dresseur.setId(Utile.getAutoID(dresseurRepository));
@@ -146,9 +146,9 @@ public class PokedexResource {
     @ApiOperation(value = "Delete a dresseur with ID",  response = TypePokemon.class)
     @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response") })
     @RequestMapping(value = "/dresseurs/{id}", method = RequestMethod.DELETE)
-    public HttpStatus deleteDresseur(@PathVariable int id) throws URISyntaxException {
+    public ResponseEntity<HttpStatus> deleteDresseur(@PathVariable int id) throws URISyntaxException {
         dresseurRepository.delete(id);
-        return HttpStatus.OK;
+        return new ResponseEntity<HttpStatus>(HttpStatus.OK);
     }
   
 //################################# PokeCapture Dresseurs ##########################################
@@ -194,16 +194,23 @@ public class PokedexResource {
     }
     
 
-    @ApiOperation(value = "Create a new pokemon list to add to the pokeCapture list of Dresseur",  response = TypePokemon.class)
-    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response"), @io.swagger.annotations.ApiResponse(code = 206, message = "Pokemons have not all been added because they don't exist in database") })
+    @ApiOperation(value = "Create a new pokemon list to add to the pokeCapture list of Dresseur",  response = HttpStatus.class)
+    @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 201, message = "Created !"), @io.swagger.annotations.ApiResponse(code = 206, message = "Pokemons have not all been added because they don't exist in database"), @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict : the pk.dresseur.id must be the same as the id parameter") })
     @RequestMapping(value = "/dresseurs/{id}/pokemons", method = RequestMethod.POST)
-    public ResponseEntity<List<PokeCapture>> createPokeCaptureDresseur(@PathVariable int id, @RequestBody List<PokeCapture> pokeCaptures) {
+    public ResponseEntity<HttpStatus> createPokeCaptureDresseur(@PathVariable int id, @RequestBody List<PokeCapture> pokeCaptures) {
+    	
+    	for(PokeCapture poke : pokeCaptures){
+    		if(poke.getDresseurID() != id){
+    			return new ResponseEntity<HttpStatus>(HttpStatus.CONFLICT);
+    		}
+    	}
     	
     	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id));
         if(dresseur.isPresent()) {
         	boolean allAdd = true;
         	
         	for(PokeCapture poke : pokeCaptures){
+//        		if(poke.getDresseurID();
         		Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(poke.getType_pokeID()));
         		if(typePokemon.isPresent()){
         			pokeCaptureRepository.save(poke);
@@ -212,20 +219,20 @@ public class PokedexResource {
 				}
         	}
         	if(allAdd){
-        		return ResponseEntity.ok().body(pokeCaptures);
+        		return new ResponseEntity<HttpStatus>(HttpStatus.OK);
         	}else{
-        		return new ResponseEntity<List<PokeCapture>>(HttpStatus.PARTIAL_CONTENT);
+        		return new ResponseEntity<HttpStatus>(HttpStatus.PARTIAL_CONTENT);
         	}
         	
         }else{
-        	return new ResponseEntity<List<PokeCapture>>(HttpStatus.NOT_FOUND);
+        	return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
         }
     }
     
     @ApiOperation(value = "Update the pokeCapture list of Dresseur with this new pokemon list",  response = TypePokemon.class, notes="Attention dans ce cas précis il est impératif de préciser l'id du dresseur dans les pokémons du Body")
     @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response"), @io.swagger.annotations.ApiResponse(code = 206, message = "Pokemons have not all been added because they don't exist in database") })
     @RequestMapping(value = "/dresseurs/{id}/pokemons", method = RequestMethod.PUT)
-    public HttpStatus updatePokeCaptureDresseur(@PathVariable int id, @RequestBody List<PokeCapture> pokeCaptures) {
+    public ResponseEntity<HttpStatus> updatePokeCaptureDresseur(@PathVariable int id, @RequestBody List<PokeCapture> pokeCaptures) {
     	
     	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id));
         if(dresseur.isPresent()) {
@@ -251,19 +258,19 @@ public class PokedexResource {
         	}
         
         	if(allUpdate){
-        		return HttpStatus.OK;
+        		return new ResponseEntity<HttpStatus>(HttpStatus.OK);
         	}else{
-        		return HttpStatus.PARTIAL_CONTENT;
+        		return new ResponseEntity<HttpStatus>(HttpStatus.PARTIAL_CONTENT);
         	}
         }else{
-        	return HttpStatus.NOT_FOUND;
+        	return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
         }
     }
     
     @ApiOperation(value = "Delete a pokeCapture with id_dresseur and id_typePokemon",  response = TypePokemon.class)
     @ApiResponses(value = {@io.swagger.annotations.ApiResponse(code = 200, message = "Successful response"), @io.swagger.annotations.ApiResponse(code = 404, message = "Dresseur or Type_Pokemon don't exist in database") })
     @RequestMapping(value = "/dresseurs/{id_d}/pokemons/{id_p}", method = RequestMethod.DELETE)
-    public HttpStatus deletePokeCaptureDresseur(@PathVariable int id_d, @PathVariable int id_p) {
+    public ResponseEntity<HttpStatus>  deletePokeCaptureDresseur(@PathVariable int id_d, @PathVariable int id_p) {
     	PKeyPokeCapture pk = new PKeyPokeCapture();
     	Optional<Dresseur> dresseur = Optional.ofNullable(dresseurRepository.findOne(id_d));
     	Optional<TypePokemon> typePokemon = Optional.ofNullable(typePokemonRepository.findOne(id_p));
@@ -272,10 +279,10 @@ public class PokedexResource {
         	pk.setType_poke(typePokemon.get());
         	pokeCaptureRepository.delete(pk);
         }else{
-        	return HttpStatus.NOT_FOUND;
+        	return new ResponseEntity<HttpStatus>(HttpStatus.NOT_FOUND);
         }
     	
-        return HttpStatus.OK;
+        return new ResponseEntity<HttpStatus>(HttpStatus.OK);
     }
 
 }

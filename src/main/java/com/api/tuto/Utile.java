@@ -10,11 +10,11 @@ import com.api.tuto.repository.DresseurRepository;
 
 public class Utile {
 	
-	private SessionFactory sessionFactory;
-	
-	public void setSessionFactory(SessionFactory sf){
-		this.sessionFactory = sf;
-	}
+//	private SessionFactory sessionFactory;
+//	
+//	public void setSessionFactory(SessionFactory sf){
+//		this.sessionFactory = sf;
+//	}
 	
 	public static int getAutoID(DresseurRepository dresseurRepository){
 		int cpt = 1;
@@ -26,8 +26,8 @@ public class Utile {
 		return cpt + 1;
 	}
 	
-	public void addPokeCapture(PokeCapture poke){
-		Session s = this.sessionFactory.getCurrentSession();
-	}
+//	public void addPokeCapture(PokeCapture poke){
+//		Session s = this.sessionFactory.getCurrentSession();
+//	}
 
 }
